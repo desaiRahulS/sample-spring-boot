@@ -1,0 +1,49 @@
+metadata:
+  name: java-web-spring-obws7
+projects:
+  - name: java-web-spring
+    source:
+      location: 'https://github.com/desaiRahulS/sample-spring-boot.git'
+      type: git
+      branch: project
+components:
+  - id: redhat/java11/latest
+    memoryLimit: 1512Mi
+    type: chePlugin
+  - mountSources: true
+    endpoints:
+      - name: 8080-tcp
+        port: 8080
+    memoryLimit: 768Mi
+    type: dockerimage
+    volumes:
+      - name: m2
+        containerPath: /home/user/.m2
+    image: 'quay.io/eclipse/che-java11-maven:7.18.1'
+    alias: tools
+    env:
+      - value: ''
+        name: MAVEN_CONFIG
+      - value: >-
+          -XX:MaxRAMPercentage=50.0 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10
+          -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4
+          -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true
+          -Xms20m -Djava.security.egd=file:/dev/./urandom -Duser.home=/home/user
+        name: JAVA_OPTS
+      - value: $(JAVA_OPTS)
+        name: MAVEN_OPTS
+apiVersion: 1.0.0
+commands:
+  - name: maven build
+    actions:
+      - workdir: '${CHE_PROJECTS_ROOT}/java-web-spring'
+        type: exec
+        command: mvn clean install
+        component: tools
+  - name: run webapp
+    actions:
+      - workdir: '${CHE_PROJECTS_ROOT}/java-web-spring'
+        type: exec
+        command: |
+          java -jar target/*.jar
+        component: tools
